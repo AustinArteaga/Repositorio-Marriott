@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Permisos - SharePoint</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .checklist { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007acc; background: white; }
+        .error { border-left-color: #dc3545; background: #fff5f5; }
+        .success { border-left-color: #28a745; background: #f5fff5; }
+        .warning { border-left-color: #ffc107; background: #fffbf0; }
+        code { background: #f1f1f1; padding: 2px 6px; border-radius: 4px; }
+        .url-test { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Diagnóstico de Permisos SharePoint</h1>
+    
+    <div class="checklist">
+        <h2>📋 Lista de Verificación</h2>
+        
+        <div class="step">
+            <h3>1️⃣ Permisos de Lista SharePoint</h3>
+            <p><strong>Ir a:</strong> Tu lista → ⚙️ → Configuración de lista → Permisos para esta lista</p>
+            <p><strong>Verificar:</strong> Que tengas "Control total" o "Colaborar"</p>
+            <p><strong>Si no tienes permisos:</strong> Pedir al administrador que te dé acceso</p>
+        </div>
+        
+        <div class="step">
+            <h3>2️⃣ Conexión Power Automate</h3>
+            <p><strong>Ir a:</strong> <a href="https://make.powerautomate.com" target="_blank">Power Automate</a> → Datos → Conexiones</p>
+            <p><strong>Buscar:</strong> "SharePoint"</p>
+            <p><strong>Estado esperado:</strong> ✅ Conectado</p>
+            <p><strong>Si hay error:</strong> Clic en "Reparar conexión"</p>
+        </div>
+        
+        <div class="step">
+            <h3>3️⃣ Permisos del Sitio</h3>
+            <p><strong>Ir a:</strong> Sitio SharePoint → ⚙️ → Permisos del sitio</p>
+            <p><strong>Verificar:</strong> Que aparezcas como "Miembro" o "Propietario"</p>
+        </div>
+        
+        <div class="step">
+            <h3>4️⃣ Estado del Flow</h3>
+            <p><strong>Ir a:</strong> Power Automate → Mis flujos → Tu Flow</p>
+            <p><strong>Verificar:</strong> Que esté "Activado" (ON)</p>
+            <p><strong>Revisar:</strong> Historial de ejecuciones para ver errores</p>
+        </div>
+    </div>
+    
+    <div class="url-test">
+        <h2>🧪 Prueba tu URL de Power Automate</h2>
+        <p>Copia y pega tu URL aquí para probarla:</p>
+        <input type="url" id="powerAutomateUrl" placeholder="https://default7235b983940447368527b8c69d3ffe.77.environment.api.powerplatform.com..." style="width: 100%; padding: 8px; margin: 10px 0;">
+        <button onclick="probarURL()" style="background: #007acc; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">🚀 Probar Conexión</button>
+        <div id="resultado" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="checklist">
+        <h2>🚨 Errores Comunes y Soluciones</h2>
+        
+        <div class="step error">
+            <h3>❌ Error 403 - Acceso Denegado</h3>
+            <p><strong>Causa:</strong> Sin permisos en SharePoint</p>
+            <p><strong>Solución:</strong> Pedir al administrador permisos de "Colaborar" en la lista</p>
+        </div>
+        
+        <div class="step error">
+            <h3>❌ Error 404 - No Encontrado</h3>
+            <p><strong>Causa:</strong> URL incorrecta o Flow desactivado</p>
+            <p><strong>Solución:</strong> Regenerar URL en Power Automate</p>
+        </div>
+        
+        <div class="step warning">
+            <h3>⚠️ Error 400 - Datos Incorrectos</h3>
+            <p><strong>Causa:</strong> Campos faltantes en SharePoint</p>
+            <p><strong>Solución:</strong> Verificar columnas de la lista</p>
+        </div>
+        
+        <div class="step error">
+            <h3>❌ Error 500 - Error del Servidor</h3>
+            <p><strong>Causa:</strong> Error en el Flow de Power Automate</p>
+            <p><strong>Solución:</strong> Revisar historial del Flow</p>
+        </div>
+    </div>
+
+    <script>
+        async function probarURL() {
+            const url = document.getElementById('powerAutomateUrl').value;
+            const resultado = document.getElementById('resultado');
+            
+            if (!url) {
+                resultado.innerHTML = '<div class="step error">❌ Por favor ingresa una URL</div>';
+                return;
+            }
+            
+            resultado.innerHTML = '<div class="step">🔄 Probando conexión...</div>';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombre: 'Prueba de Conexión',
+                        email: 'prueba@test.com',
+                        consumoMensual: 100,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    resultado.innerHTML = '<div class="step success">✅ ¡Conexión exitosa! El problema no son los permisos.</div>';
+                } else {
+                    resultado.innerHTML = `
+                        <div class="step error">
+                            ❌ Error ${response.status}: ${response.statusText}<br>
+                            <strong>Diagnóstico:</strong> ${getDiagnostico(response.status)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultado.innerHTML = `
+                    <div class="step error">
+                        ❌ Error de conexión: ${error.message}<br>
+                        <strong>Posible causa:</strong> URL incorrecta o problemas de red
+                    </div>
+                `;
+            }
+        }
+        
+        function getDiagnostico(status) {
+            switch (status) {
+                case 400: return 'Datos mal formateados - Revisar campos de SharePoint';
+                case 401: return 'Sin autorización - Problema de autenticación';
+                case 403: return 'Acceso denegado - Revisar permisos de SharePoint';
+                case 404: return 'URL incorrecta o Flow desactivado';
+                case 500: return 'Error interno - Revisar configuración del Flow';
+                default: return 'Error desconocido - Contactar soporte';
+            }
+        }
+    </script>
+</body>
+</html>

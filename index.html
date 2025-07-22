@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Solar - Sistema de Ahorro Fotovoltaico</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-placeholder">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>Calculadora Solar</h1>
+                        <p>Sistema de Ahorro Fotovoltaico</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Formulario -->
+            <div class="form-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-calculator"></i> Datos del Cliente</h2>
+                    <p>Ingresa la información para calcular tu potencial de ahorro energético</p>
+                </div>
+                <div class="card-content">
+                    <!-- Alertas de Error -->
+                    <div id="error-alert" class="alert alert-error" style="display: none;">
+                        <ul id="error-list"></ul>
+                    </div>
+
+                    <!-- Campos del Formulario -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Cliente *</label>
+                            <input type="text" id="nombre" placeholder="Ingresa el nombre completo">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tipoCliente">Tipo de Cliente *</label>
+                            <select id="tipoCliente">
+                                <option value="">Selecciona el tipo</option>
+                                <option value="Residencial">🏠 Residencial</option>
+                                <option value="Comercial">🏢 Comercial</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="celular">Número Celular *</label>
+                            <input type="tel" id="celular" placeholder="593987654321" maxlength="12">
+                            <small class="field-help">Formato: 593 + 9 dígitos (sin espacios)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico *</label>
+                            <input type="email" id="email" placeholder="cliente@ejemplo.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ciudad">Ciudad *</label>
+                            <input type="text" id="ciudad" placeholder="Ingresa la ciudad">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="consumoMensual">Consumo Mensual (kWh) *</label>
+                            <input type="number" id="consumoMensual" placeholder="Ej: 3501" min="1" step="1">
+                            <div class="consumo-help">
+                                <small class="field-help">Ingresa el consumo en kWh de tu planilla de luz</small>
+                                <a href="#" id="verConsumoLink" class="consumo-link">
+                                    <i class="fas fa-eye"></i> ¿Cómo ver mi consumo?
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="calcularBtn" class="btn-primary">
+                        <i class="fas fa-bolt"></i> Calcular Ahorro
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal para mostrar imagen de ayuda -->
+            <div id="consumoModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-file-invoice"></i> ¿Cómo encontrar mi consumo mensual?</h3>
+                        <button class="modal-close" id="closeModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>En tu planilla de luz, busca el valor de <strong>"Consumo kWh"</strong> o <strong>"Energía Consumida"</strong>:</p>
+                        <div class="image-container">
+                            <img src="/images/FOTO_DE_PLANILLA.png" alt="Ejemplo de planilla de luz mostrando consumo en kWh" id="planillaImage">
+                        </div>
+                        <div class="help-tips">
+                            <div class="tip-item">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>El consumo aparece en <strong>kWh</strong> (kilovatios hora)</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Usa el consumo del <strong>último mes completo</strong></span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="fas fa-search"></i>
+                                <span>Busca en la sección de <strong>"Detalle del Consumo"</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div id="resultados" class="resultados" style="display: none;">
+                <!-- Header de Resultados -->
+                <div class="result-header">
+                    <h2><i class="fas fa-chart-line"></i> Análisis de Ahorro Fotovoltaico</h2>
+                    <div id="cliente-info"></div>
+                </div>
+
+                <!-- Grid de Resultados -->
+                <div class="results-grid">
+                    <!-- Situación Actual -->
+                    <div class="result-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-lightbulb"></i> Situación Actual</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span>Consumo mensual:</span>
+                                <span id="consumo-mensual-display"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Costo mensual sin SFV:</span>
+                                <span id="costo-mensual-sin-sfv" class="cost-negative"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Consumo anual:</span>
+                                <span id="consumo-anual"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Costo anual sin SFV:</span>
+                                <span id="costo-anual-sin-sfv" class="cost-negative"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistema Fotovoltaico -->
+                    <div class="result-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-sun"></i> Sistema Fotovoltaico</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span>Tamaño sugerido:</span>
+                                <span id="tamano-sfv"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Inversión estimada:</span>
+                                <span id="precio-inversion" class="cost-primary"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Producción anual:</span>
+                                <span id="produccion-anual"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Producción mensual:</span>
+                                <span id="produccion-mensual"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Cantidad de paneles:</span>
+                                <span id="cantidad-paneles"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Área requerida:</span>
+                                <span id="area-requerida"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Con Sistema Solar -->
+                    <div class="result-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-piggy-bank"></i> Con Sistema Solar</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span>Nuevo consumo mensual:</span>
+                                <span id="nuevo-consumo-mensual"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Nuevo costo mensual:</span>
+                                <span id="nuevo-costo-mensual"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Ahorro mensual:</span>
+                                <span id="ahorro-mensual" class="cost-positive"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Ahorro anual:</span>
+                                <span id="ahorro-anual" class="cost-positive"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Ahorro anual (%):</span>
+                                <span id="ahorro-porcentaje" class="cost-positive"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tiempo de Retorno -->
+                <div class="retorno-card">
+                    <div class="retorno-content">
+                        <div class="retorno-header">
+                            <i class="fas fa-clock"></i>
+                            <h3>Tiempo Estimado de Retorno</h3>
+                        </div>
+                        <div class="retorno-value" id="tiempo-retorno"></div>
+                        <p id="retorno-description"></p>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <i class="fas fa-chart-bar"></i>
+                                <div class="metric-value" id="metric-porcentaje"></div>
+                                <div class="metric-label">Ahorro Anual</div>
+                            </div>
+                            <div class="metric-item">
+                                <i class="fas fa-dollar-sign"></i>
+                                <div class="metric-value" id="metric-ahorro"></div>
+                                <div class="metric-label">Ahorro USD/año</div>
+                            </div>
+                            <div class="metric-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div class="metric-value" id="metric-area"></div>
+                                <div class="metric-label">Área Requerida</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="action-buttons">
+                    <button id="generarPdfBtn" class="btn-pdf">
+                        <i class="fas fa-file-pdf"></i> Descargar Informe PDF
+                    </button>
+                    <button id="whatsappBtn" class="btn-whatsapp">
+                        <i class="fab fa-whatsapp"></i> Obtener Más Información
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
